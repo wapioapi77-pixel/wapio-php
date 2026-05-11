@@ -1,0 +1,12 @@
+parameters:
+    level: 6
+    paths:
+        - src
+    excludePaths:
+        - src/Laravel
+    ignoreErrors:
+        - identifier: missingType.iterableValue
+        # Response<T> is intentionally generic but resource methods return
+        # bare `Response` (T defaults to mixed). Suppressing avoids ~70
+        # redundant `@return Response<mixed>` annotations.
+        - '#class Wapio\\Http\\Response does not specify its types: T#'
