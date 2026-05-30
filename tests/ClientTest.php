@@ -155,6 +155,36 @@ final class ClientTest extends TestCase
         $this->assertStringContainsString('before_id=bps_sess_ws_x', $uri);
     }
 
+    public function test_group_participant_add_remove_paths(): void
+    {
+        $history = [];
+        $wapio = $this->makeClient([
+            new GuzzleResponse(200, [], json_encode(['success' => true, 'data' => ['ok' => true]])),
+            new GuzzleResponse(200, [], json_encode(['success' => true, 'data' => ['ok' => true]])),
+        ], $history);
+
+        $wapio->addGroupParticipants('120363@g.us', ['15551234567@s.whatsapp.net']);
+        $wapio->removeGroupParticipants('120363@g.us', ['15551234567@s.whatsapp.net']);
+
+        $this->assertSame('POST', $history[0]['request']->getMethod());
+        $this->assertSame('https://api.wapio.test/api/groups/120363%40g.us/participants/add', (string) $history[0]['request']->getUri());
+        $this->assertSame('POST', $history[1]['request']->getMethod());
+        $this->assertSame('https://api.wapio.test/api/groups/120363%40g.us/participants/remove', (string) $history[1]['request']->getUri());
+    }
+
+    public function test_media_decrypt_uses_api_decrypt_media(): void
+    {
+        $history = [];
+        $wapio = $this->makeClient([
+            new GuzzleResponse(200, [], json_encode(['success' => true, 'data' => ['media_id' => 'bps_im_x']])),
+        ], $history);
+
+        $wapio->decryptMedia(['mediaKey' => 'key', 'directPath' => '/v/t', 'type' => 'image']);
+
+        $this->assertSame('POST', $history[0]['request']->getMethod());
+        $this->assertSame('https://api.wapio.test/api/decrypt-media', (string) $history[0]['request']->getUri());
+    }
+
     public function test_create_session_with_only_apikey_throws_config_exception(): void
     {
         // No mock response — the SDK must fail BEFORE the network call.
@@ -163,50 +193,11 @@ final class ClientTest extends TestCase
         $wapio->createSession(['label' => 'x']);
     }
 
-    public function test_dashboard_overview_with_only_apikey_throws_config_exception(): void
-    {
-        $wapio = $this->makeClient([]);
-        $this->expectException(WapioConfigException::class);
-        $wapio->getDashboardOverview();
-    }
-
     public function test_regenerate_api_key_with_only_apikey_throws_config_exception(): void
     {
         $wapio = $this->makeClient([]);
         $this->expectException(WapioConfigException::class);
         $wapio->regenerateApiKey('bps_sess_ws_x');
-    }
-
-    public function test_alias_get_all_whatsapp_sessions_routes_to_list_sessions(): void
-    {
-        $history = [];
-        $wapio = $this->makeClient([
-            new GuzzleResponse(200, [], json_encode(['success' => true, 'data' => ['data' => [], 'next_cursor' => null]])),
-        ], $history);
-
-        $wapio->getAllWhatsAppSessions();
-
-        $req = $history[0]['request'];
-        $this->assertSame('GET', $req->getMethod());
-        $this->assertStringStartsWith('https://api.wapio.test/v1/whatsapp-sessions', (string) $req->getUri());
-    }
-
-    public function test_alias_send_message_with_mentions_routes_to_send_text(): void
-    {
-        $history = [];
-        $wapio = $this->makeClient([
-            new GuzzleResponse(200, [], json_encode(['success' => true, 'data' => ['msgId' => 'x', 'jid' => 'y', 'status' => 'queued']])),
-        ], $history);
-
-        $wapio->sendMessageWithMentions([
-            'to' => '<g>@g.us',
-            'text' => '@123 hi',
-            'mentions' => ['123@s.whatsapp.net'],
-        ]);
-
-        $body = json_decode((string) $history[0]['request']->getBody(), true);
-        $this->assertSame('@123 hi', $body['text']);
-        $this->assertSame(['123@s.whatsapp.net'], $body['mentions']);
     }
 
     public function test_dual_token_routes_pat_only_endpoints_to_pat(): void

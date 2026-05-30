@@ -52,10 +52,6 @@ class WapioServiceProvider extends ServiceProvider
             );
         }
 
-        // Auto-mount the default webhook route. To use a custom path,
-        // set `WAPIO_WEBHOOK_ROUTE=""` in .env (disables the auto-route)
-        // and register your own route pointing at WebhookController.
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/webhooks.php');
     }
 
     /**

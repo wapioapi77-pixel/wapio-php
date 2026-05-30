@@ -54,17 +54,4 @@ trait ContactsTrait
         );
     }
 
-    /**
-     * @param array{phone:string,name?:string} $payload
-     * @param array<string,mixed> $options
-     */
-    public function upsertContact(array $payload, array $options = []): Response
-    {
-        return $this->http->request(
-            method: 'PUT',
-            path: '/api/contacts',
-            body: $payload,
-            options: $options,
-        );
-    }
 }

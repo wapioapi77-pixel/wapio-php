@@ -2,7 +2,7 @@
     "name": "wapio/wapio",
     "description": "Official PHP / Laravel SDK for Wapio — developer-first WhatsApp API.",
     "type": "library",
-    "keywords": ["wapio", "whatsapp", "whatsapp-api", "sdk", "messaging", "laravel", "webhook"],
+    "keywords": ["wapio", "whatsapp", "whatsapp-api", "api", "sdk", "messaging", "chatbot", "laravel"],
     "homepage": "https://www.wapio.io",
     "license": "MIT",
     "authors": [

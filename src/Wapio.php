@@ -7,8 +7,6 @@ namespace Wapio;
 use GuzzleHttp\Client as GuzzleClient;
 use Wapio\Http\HttpClient;
 use Wapio\Http\RetryConfig;
-use Wapio\Resources\AliasesTrait;
-use Wapio\Resources\ChatsTrait;
 use Wapio\Resources\ContactsTrait;
 use Wapio\Resources\GroupsTrait;
 use Wapio\Resources\MediaTrait;
@@ -39,10 +37,8 @@ class Wapio
     use SessionsTrait;
     use ContactsTrait;
     use GroupsTrait;
-    use ChatsTrait;
     use MediaTrait;
     use MiscTrait;
-    use AliasesTrait;
 
     protected HttpClient $http;
 
@@ -96,9 +92,4 @@ class Wapio
         );
     }
 
-    /** @internal Exposed for advanced use; prefer the resource methods. */
-    public function http(): HttpClient
-    {
-        return $this->http;
-    }
 }
