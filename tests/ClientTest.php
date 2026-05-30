@@ -77,6 +77,19 @@ final class ClientTest extends TestCase
         $this->assertSame('fixed-key-123', $history[0]['request']->getHeaderLine('Idempotency-Key'));
     }
 
+    public function test_send_channel_message_sends_channel_id(): void
+    {
+        $history = [];
+        $wapio = $this->makeClient([
+            new GuzzleResponse(200, [], json_encode(['success' => true, 'data' => ['msgId' => 'x', 'jid' => '120363@newsletter', 'status' => 'queued']])),
+        ], $history);
+
+        $wapio->sendChannelMessage('120363@newsletter', 'Channel update');
+
+        $body = json_decode((string) $history[0]['request']->getBody(), true);
+        $this->assertSame(['channel_id' => '120363@newsletter', 'text' => 'Channel update'], $body);
+    }
+
     public function test_422_throws_wapio_api_exception_with_reason_code(): void
     {
         $wapio = $this->makeClient([

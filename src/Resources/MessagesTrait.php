@@ -44,6 +44,16 @@ trait MessagesTrait
     }
 
     /**
+     * Publish a text message to a WhatsApp Channel/newsletter.
+     *
+     * @param array<string,mixed> $options
+     */
+    public function sendChannelMessage(string $channelId, string $text, array $options = []): Response
+    {
+        return $this->send(['channel_id' => $channelId, 'text' => $text], $options);
+    }
+
+    /**
      * @param array<string,mixed> $payload
      * @param array<string,mixed> $options
      */

@@ -120,6 +120,13 @@ $wapio->sendQuotedMessage([
     'quoted_message_id' => 'bps_msg_previous',
 ]);
 
+// WhatsApp Channel/newsletter message.
+// Use payload.chat_id / payload.from_jid from newsletter_message_received.
+$wapio->sendChannelMessage(
+    '120363428122592568@newsletter',
+    "This week's release is live",
+);
+
 // View-once image
 $wapio->sendImage(['to' => '+15551234567', 'imageUrl' => 'https://...', 'viewOnce' => true]);
 ```
