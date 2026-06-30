@@ -6,10 +6,10 @@
     "homepage": "https://www.wapio.io",
     "license": "MIT",
     "authors": [
-        { "name": "Wapio", "email": "support@wapio.io" }
+        { "name": "Wapio", "email": "contact@wapio.io" }
     ],
     "support": {
-        "email": "support@wapio.io",
+        "email": "contact@wapio.io",
         "docs": "https://www.wapio.io/docs"
     },
     "require": {

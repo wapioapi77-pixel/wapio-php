@@ -14,6 +14,17 @@ trait ContactsTrait
         return $this->http->request(method: 'GET', path: '/api/contacts', options: $options);
     }
 
+    /** @param array{phone:string,name?:string,session_id?:string} $payload @param array<string,mixed> $options */
+    public function createOrUpdateContact(array $payload, array $options = []): Response
+    {
+        return $this->http->request(
+            method: 'PUT',
+            path: '/api/contacts',
+            body: array_filter($payload, static fn ($value) => $value !== null),
+            options: $options,
+        );
+    }
+
     /** @param array<string,mixed> $options */
     public function getContact(string $phone, array $options = []): Response
     {
@@ -53,5 +64,4 @@ trait ContactsTrait
             options: $options,
         );
     }
-
 }

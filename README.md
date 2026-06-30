@@ -11,10 +11,12 @@ PHP 8.1+ is required. Laravel support is optional.
 ## Features
 
 - Framework-agnostic PHP client with optional Laravel service provider and facade.
-- Text, image, video, document, group, and channel message helpers.
+- Text, image, video, audio, sticker, document, contact, location, poll, group, and channel message helpers.
 - Session lifecycle: create, list, update, delete, connect, disconnect, QR, status, and key rotation.
-- Contact management: list, details, profile picture, block, and unblock.
-- Group management: list, metadata, participants add/remove, and settings.
+- Contact management: list, create/update, details, profile picture, block, and unblock.
+- Group management: list, metadata, participants, add/remove, promote/demote, invite links, leave, and settings.
+- Message lifecycle: info, edit, delete, resend failed, mark as read, presence, and logs.
+- Webhook signature verification and Laravel event helper.
 - Inbound encrypted media decrypt helper.
 - Rate-limit metadata and request IDs on every response.
 - Automatic idempotency keys for message sends.
@@ -103,6 +105,23 @@ $wapio->sendDocument([
     'documentUrl' => 'https://example.com/file.pdf',
     'file_name' => 'file.pdf',
 ]);
+$wapio->sendAudio(['to' => '+15551234567', 'audioUrl' => 'https://example.com/audio.ogg', 'voice' => true]);
+$wapio->sendSticker(['to' => '+15551234567', 'stickerUrl' => 'https://example.com/sticker.webp']);
+$wapio->sendContact([
+    'to' => '+15551234567',
+    'contact' => ['name' => 'M', 'phone' => '+15559876543'],
+]);
+$wapio->sendLocation([
+    'to' => '+15551234567',
+    'latitude' => 40.7128,
+    'longitude' => -74.0060,
+    'name' => 'New York',
+]);
+$wapio->sendPoll([
+    'to' => '+15551234567',
+    'question' => 'Choose a delivery slot',
+    'options' => ['Morning', 'Afternoon'],
+]);
 ```
 
 Pass your own idempotency key when you need retry deduplication across processes:
@@ -131,6 +150,26 @@ $wapio->sendChannelMessage(
 $wapio->getMessageInfo('bps_msg_...');
 $wapio->editMessage('bps_msg_...', 'Corrected text');
 $wapio->deleteMessage('bps_msg_...');
+$wapio->resendFailedMessage('bps_msg_...');
+$wapio->markMessageAsRead(['bps_msg_...'], '15551234567@s.whatsapp.net');
+$wapio->sendPresenceUpdate(['to' => '15551234567@s.whatsapp.net', 'presence' => 'composing']);
+```
+
+Use the generic `send` method for advanced payloads supported by Wapio:
+
+```php
+$wapio->send([
+    'to' => '+15551234567',
+    'text' => 'Replying to your earlier message',
+    'quoted_message_id' => 'bps_msg_parent',
+]);
+
+$wapio->sendViewOnceMessage([
+    'to' => '+15551234567',
+    'kind' => 'image',
+    'imageUrl' => 'https://example.com/private.jpg',
+    'caption' => 'View once',
+]);
 ```
 
 ## Sessions
@@ -161,6 +200,7 @@ Store `session_api_key.raw` when it is returned. It is shown once.
 
 ```php
 $wapio->getContacts();
+$wapio->createOrUpdateContact(['phone' => '+15551234567', 'name' => 'M']);
 $wapio->getContact('+15551234567');
 $wapio->getContactProfilePicture('+15551234567');
 $wapio->blockContact('+15551234567');
@@ -179,11 +219,18 @@ $groupJid = $group->data['group_jid'];
 $wapio->getGroups();
 $wapio->getGroupMetadata($groupJid);
 $wapio->getGroupParticipants($groupJid);
+$wapio->getGroupProfilePicture($groupJid);
 $wapio->addGroupParticipants($groupJid, ['15559876543@s.whatsapp.net']);
 $wapio->removeGroupParticipants($groupJid, ['15559876543@s.whatsapp.net']);
+$wapio->promoteGroupParticipants($groupJid, ['15559876543@s.whatsapp.net']);
+$wapio->demoteGroupParticipants($groupJid, ['15559876543@s.whatsapp.net']);
 $wapio->updateGroupSettings($groupJid, ['announce' => true]);
+$wapio->getGroupInviteLink($groupJid);
+$wapio->getGroupInviteMetadata('INVITE_CODE');
+$wapio->acceptGroupInvite('INVITE_CODE');
+$wapio->leaveGroup($groupJid);
 
-$wapio->sendText(['to' => $groupJid, 'text' => 'Hello group']);
+$wapio->sendGroupMessage($groupJid, 'Hello group', ['15559876543@s.whatsapp.net']);
 ```
 
 ## Media
@@ -206,6 +253,35 @@ $media = $wapio->decryptMedia([
 ```php
 $wapio->getUser();
 $wapio->onWhatsapp('+15551234567');
+$wapio->getMessageLogs('bps_sess_ws_...', ['limit' => 50]);
+$wapio->getSessionLogs('bps_sess_ws_...', ['limit' => 50]);
+```
+
+## Webhooks
+
+Verify the raw request body with your session webhook signing secret before trusting the payload:
+
+```php
+use Wapio\Webhook;
+
+$rawBody = file_get_contents('php://input') ?: '';
+$signature = $_SERVER['HTTP_X_WEBHOOK_SIGNATURE'] ?? '';
+
+$event = Webhook::constructEvent(
+    secret: 'whsec_...',
+    signatureHeader: $signature,
+    rawBody: $rawBody,
+);
+```
+
+In Laravel, dispatch a typed event after verification:
+
+```php
+use Wapio\Webhook;
+
+$event = Webhook::constructEvent($secret, $request->header('X-Webhook-Signature'), $request->getContent());
+
+Webhook::dispatchLaravelEvent($event, fn ($laravelEvent) => event($laravelEvent));
 ```
 
 ## Errors
